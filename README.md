@@ -28,6 +28,8 @@ Full write-up: see the accompanying dissertation report.
   for age and sex jointly
 - **Confounder validity check**: mixed-effects models testing whether age
   and sex genuinely relate to any of the 16 voice features
+- **Weight diagnostics**: effective sample size checks confirming both
+  methods' resampling weights are well-behaved, not degenerate
 
 ---
 
@@ -46,10 +48,12 @@ Full write-up: see the accompanying dissertation report.
 ├── src/
 │   ├── aggregate_subjects.py               # builds subject_level.csv (Method 1 prep)
 │   ├── method1_bootstrap.py                # Method 1: subject-level aggregation, LOO evaluation
+│   ├── method1_weight_diagnostic.py        # Method 1: effective sample size check on fitted weights
 │   ├── method2_joint_kde.py                # Method 2: joint KDE + Bayes' rule density estimation
-│   ├── method2_5fold_eval.py                # Method 2: single-run subject-grouped + random-split evaluation
+│   ├── method2_5fold_eval.py               # Method 2: single-run subject-grouped + random-split evaluation
 │   ├── method2_random_split_test.py        # Method 2: naive random-split diagnostic (Little, 2017)
 │   ├── method2_multiseed.py                # Method 2: 10-seed averaged subject-grouped evaluation
+│   ├── method2_weight_diagnostic.py        # Method 2: effective sample size check on fitted weights
 │   ├── simultaneous_sex_association.py     # confounder validity check: mixed-effects model (sex)
 │   └── simultaneous_age_association.py     # confounder validity check: mixed-effects model (age)
 ├── method2_grouped_multiseed_results.csv   # saved output of the 10-seed Method 2 run
@@ -83,16 +87,18 @@ jupyter notebook notebook/01_eda.ipynb
 **2. Method 1 (subject-level aggregation)**
 
 ```bash
-python -m src.aggregate_subjects       # produces data/subject_level.csv
-python -m src.method1_bootstrap        # runs leave-one-out benchmark, 10 seeds
+python -m src.aggregate_subjects            # produces data/subject_level.csv
+python -m src.method1_bootstrap             # runs leave-one-out benchmark, 10 seeds
+python -m src.method1_weight_diagnostic     # effective sample size check on fitted weights
 ```
 
 **3. Method 2 (joint distribution modelling)**
 
 ```bash
-python -m src.method2_5fold_eval           # single-run subject-grouped + random-split evaluation
-python -m src.method2_random_split_test    # naive random-split diagnostic (Little, 2017)
-python -m src.method2_multiseed            # 10-seed averaged subject-grouped evaluation
+python -m src.method2_5fold_eval            # single-run subject-grouped + random-split evaluation
+python -m src.method2_random_split_test     # naive random-split diagnostic (Little, 2017)
+python -m src.method2_multiseed             # 10-seed averaged subject-grouped evaluation
+python -m src.method2_weight_diagnostic     # effective sample size check on a representative sample
 ```
 Note: a full Method 2 run takes ~20-25 minutes due to the cost of resampling
 across all 5,875 recordings.
@@ -119,6 +125,12 @@ p = 0.154); Method 2's decline is highly significant (t(9) = 17.51,
 p < .001). A mixed-effects confounder check found neither age nor sex
 significantly relates to any of the 16 voice features individually,
 consistent with the small effect sizes observed for both methods.
+
+Weight diagnostics confirm both methods' resampling weights are
+well-behaved: Method 1's mean effective sample size was 18.3 out of ~41
+candidates (minimum 6.0), and Method 2's mean was 824 out of ~5,874
+candidates (minimum 257, on a representative sample of 300 target points),
+neither degenerating onto a single or handful of points.
 
 ---
 
